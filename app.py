@@ -216,10 +216,12 @@ if not st.session_state.history and not question:
 """, unsafe_allow_html=True)
 
     st.markdown('<div class="label">Try an exam question</div>', unsafe_allow_html=True)
-    cols = st.columns(2)
-    for i, q in enumerate(exam_questions):
-        with cols[i % 2]:
-            st.button(q, key=f"try{i}", icon=topics[i][0], on_click=pick, args=(q,), width="stretch")
+    # one row of two cards at a time so phones show them in order
+    for row in range(0, len(exam_questions), 2):
+        cols = st.columns(2)
+        for i in range(row, min(row + 2, len(exam_questions))):
+            with cols[i - row]:
+                st.button(exam_questions[i], key=f"try{i}", icon=topics[i][0], on_click=pick, args=(exam_questions[i],), width="stretch")
 
     st.markdown("""
 <div class="label">How it works</div>
