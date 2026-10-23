@@ -5,7 +5,7 @@ Every answer comes with a **reference to the policy section and page** it was ta
 
 Built with **Python + LangChain + ChromaDB**, using Google Gemini for embeddings, GPT-OSS 120B on Groq for answers, and a Streamlit chat UI. Everything runs on free tiers.
 
-![app](screenshots/q1.png)
+![app](screenshots/home.png)
 
 ---
 
