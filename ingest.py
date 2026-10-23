@@ -11,7 +11,7 @@ from langchain_chroma import Chroma
 
 load_dotenv()
 
-pdf_path = "data/hr_manual.pdf"
+pdf_path = "static/hr_manual.pdf"
 db_path = "db"
 collection = "hr_manual"
 

@@ -1,3 +1,4 @@
+import time
 from html import escape
 
 import streamlit as st
@@ -21,6 +22,9 @@ st.markdown("""
 .not-found { display: inline-block; background: #fdeeee; color: #a12a2a; border: 1px solid #f3caca;
              border-radius: 8px; padding: .35rem .8rem; font-weight: 600; font-size: 1.05rem; }
 .why { color: #7a8594; font-size: .85rem; margin-top: .45rem; }
+.ref a { color: #0b4f8a; font-weight: 600; text-decoration: none; margin-left: .5rem; white-space: nowrap; }
+.ref a:hover { text-decoration: underline; }
+.meta { color: #8a94a3; font-size: .78rem; margin: .2rem 0 .5rem; }
 .source-head { font-size: .85rem; color: #0f2a4a; margin-top: .6rem; }
 .source-text { font-size: .8rem; color: #5b6778; white-space: pre-wrap; }
 .stats { display: flex; gap: .6rem; flex-wrap: wrap; margin: .9rem 0 .2rem; }
@@ -52,14 +56,24 @@ def show_answer(result):
             unsafe_allow_html=True,
         )
         for c in result["citations"]:
+            link = f'app/static/hr_manual.pdf#page={c["page"]}'
+            quote = c["quote"].lstrip("-> ")
             st.markdown(
-                f'<div class="ref">📄 <b>Reference:</b> {escape(c["section"])} &nbsp;·&nbsp; page {c["page"]}</div>'
-                f'<div class="quote">"{escape(c["quote"])}"</div>',
+                f'<div class="ref">📄 <b>Reference:</b> {escape(c["section"])} &nbsp;·&nbsp; page {c["page"]}'
+                f'<a href="{link}" target="_blank">View page {c["page"]} ↗</a></div>'
+                f'<div class="quote">"{escape(quote)}"</div>',
                 unsafe_allow_html=True,
             )
     else:
         st.markdown('<div class="not-found">Not found</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="why">{escape(result["reason"])}</div>', unsafe_allow_html=True)
+
+    best = result["sources"][0] if result["sources"] else None
+    if best and "seconds" in result:
+        st.markdown(
+            f'<div class="meta">answered in {result["seconds"]}s · best match {best["score"]} (page {best["page"]})</div>',
+            unsafe_allow_html=True,
+        )
 
     with st.expander(f"Sources checked ({len(result['sources'])} chunks)"):
         for s in result["sources"]:
@@ -128,7 +142,14 @@ if question:
     with st.chat_message("user"):
         st.write(question)
     with st.chat_message("assistant"):
-        with st.spinner("searching the manual..."):
-            result = ask(question)
-        show_answer(result)
-    st.session_state.history.append(result)
+        try:
+            start = time.time()
+            with st.spinner("searching the manual..."):
+                result = ask(question)
+            result["seconds"] = round(time.time() - start, 1)
+        except Exception:
+            result = None
+            st.error("couldn't reach the model right now, please try again in a minute")
+        if result:
+            show_answer(result)
+            st.session_state.history.append(result)

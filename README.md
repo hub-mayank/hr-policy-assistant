@@ -54,6 +54,7 @@ flowchart LR
 3. **Gate 2, strict prompt:** the LLM gets only those 5 chunks and must answer only from them, with no outside knowledge. A related topic is not an answer: if the question asks for an amount, rate or name that is not written in the context, it must say `Not found`. It returns structured output: `found`, `answer` and a list of `citations` (page + exact quote).
 4. **Citation check:** every quote is checked against the text of the retrieved chunk on that page. A citation that cannot be found in the retrieved text is dropped, and an answer with no verified citation becomes `Not found`. So the system never shows a reference it did not actually read.
 5. The **section name comes from the chunk metadata**, not from the LLM, so it cannot be made up.
+6. In the UI every reference has a **View page N** link that opens the manual at that exact page, so any answer can be checked in one click. Each answer also shows the response time and the best match score.
 
 ### Why two gates?
 Retrieval scores alone cannot catch tricky questions. Off-topic questions like *"GST rate in India"* score around 0.56–0.60, but near-topic traps like *"health-insurance premium amount"* score 0.67 because the Compensation Policy mentions *Medical Reimbursement* and *ESIC*. That is the same range as real answers (0.70–0.76). The score gate removes clearly unrelated questions, and the prompt and citation check handle the close ones.
@@ -79,7 +80,7 @@ Retrieval scores alone cannot catch tricky questions. Off-topic questions like *
 
 ```
 hr-policy-assistant/
-├── data/hr_manual.pdf     the HR manual
+├── static/hr_manual.pdf   the HR manual (also served by the app for the View page link)
 ├── ingest.py              load, clean, tag sections, chunk, embed, store in ChromaDB
 ├── rag.py                 retrieve, the two Not found gates, citation check
 ├── ask.py                 terminal: one question, the 5 exam questions, or the test set
@@ -185,6 +186,7 @@ On phones the sidebar collapses, so the exam questions are also shown as buttons
 
 - **No chat memory.** Every question is answered on its own, so an earlier answer can never leak into a later one and make a "Not found" question look answered.
 - **Temperature 0** for the same answer every time.
+- **Friendly errors.** If the model or network is down, the app shows a short message instead of crashing.
 - **Numbers are taken from the manual, not from the law.** For example, Indian law now gives 26 weeks of maternity leave, but this manual says 12 weeks (90 days), and the system answers 90 days because it only uses the manual.
 - **Page level sections.** Section names are mapped per page. A page where one policy ends and the next starts is tagged with both names (e.g. page 31: Drug and Alcohol Abuse Policy / Health and Safety Policy).
 - **Limit:** answers depend on the text the PDF parser can read. Content inside images would not be found.
